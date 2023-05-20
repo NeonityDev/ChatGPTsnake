@@ -3,6 +3,9 @@
 const canvas = document.getElementById("game-board");
 const context = canvas.getContext("2d");
 const tileSize = 20;
+let startTime = null;
+let timerInterval = null;
+const stopwatchDisplay = document.getElementById("stopwatch");
 
 let snake = [
   { x: tileSize * 5, y: tileSize * 5 },
@@ -78,13 +81,13 @@ canvas.addEventListener("touchmove", (e) => {
 
 
 gameLoop();
+startStopwatch();
 
 function update() {
   const head = { x: snake[0].x + dx, y: snake[0].y + dy };
 
   if (head.x === food.x && head.y === food.y) {
-    food.x = Math.floor(Math.random() * (canvas.width / tileSize)) * tileSize;
-    food.y = Math.floor(Math.random() * (canvas.height / tileSize)) * tileSize;
+    generateFood();
     score++;
 
     if (score > highScore) {
@@ -112,6 +115,7 @@ function update() {
     dx = tileSize;
     dy = 0;
     score = 0;
+    resetStopwatch();
   }
 
   scoreDisplay.innerText = `Pontszám: ${score}`;
@@ -158,3 +162,45 @@ document.addEventListener("keydown", (e) => {
       dy = 0;
     }
   });
+  
+function generateFood() {
+  while (true) {
+    food.x = Math.floor(Math.random() * (canvas.width / tileSize)) * tileSize;
+    food.y = Math.floor(Math.random() * (canvas.height / tileSize)) * tileSize;
+    
+    let isOnSnake = false;
+    for (const segment of snake) {
+      if (segment.x === food.x && segment.y === food.y) {
+        isOnSnake = true;
+        break;
+      }
+    }
+    
+    if (!isOnSnake) break;
+  }
+}
+
+function startStopwatch() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    let elapsedTime = Date.now() - startTime;
+    let minutes = Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60));
+    let seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
+    let milliseconds = elapsedTime % 1000;
+    stopwatchDisplay.innerText = `${pad(minutes)}:${pad(seconds)}.${padMilliseconds(milliseconds)}`;
+  }, 10); // Update every 10ms for more accurate milliseconds
+}
+
+function resetStopwatch() {
+  clearInterval(timerInterval);
+  stopwatchDisplay.innerText = "00:00.000";
+  startStopwatch();
+}
+
+function pad(number) {
+  return number < 10 ? "0" + number : number;
+}
+
+function padMilliseconds(number) {
+  return number < 10 ? "00" + number : number < 100 ? "0" + number : number;
+}
